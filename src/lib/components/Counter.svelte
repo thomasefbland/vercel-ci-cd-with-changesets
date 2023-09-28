@@ -53,6 +53,6 @@
 	}
 
 	.reset {
-		@apply mt-2 rounded-md bg-green-300 px-6 py-3 text-lg;
+		@apply mt-2 rounded-md bg-green-400 px-6 py-3 text-lg;
 	}
 </style>
