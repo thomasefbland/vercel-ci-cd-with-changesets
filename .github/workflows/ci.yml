@@ -6,7 +6,7 @@ on:
       - "!production"
 
 jobs:
-  lint-build:
+  lint-build-test:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -32,3 +32,11 @@ jobs:
       - name: Build
         if: ${{ !startsWith(github.ref_name, 'chore/') && !startsWith(github.ref_name, 'docs/') && !startsWith(github.event.head_commit.message, 'chore:') && !startsWith(github.event.head_commit.message, 'NO-DEPLOY:') }}
         run: pnpm build
+
+      - name: Unit Test with Vitest
+        if: ${{ !startsWith(github.ref_name, 'chore/') && !startsWith(github.ref_name, 'docs/') && !startsWith(github.event.head_commit.message, 'chore:') && !startsWith(github.event.head_commit.message, 'NO-DEPLOY:') }}
+        run: pnpm test:unit
+
+      - name: Integration Test with Playwright
+        if: ${{ !startsWith(github.ref_name, 'chore/') && !startsWith(github.ref_name, 'docs/') && !startsWith(github.event.head_commit.message, 'chore:') && !startsWith(github.event.head_commit.message, 'NO-DEPLOY:') }}
+        run: pnpx playwright install --with-deps && pnpm test:integration
