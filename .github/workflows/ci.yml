@@ -1,0 +1,34 @@
+name: CI
+on:
+  push:
+    branches:
+      - "**"
+      - "!production"
+
+jobs:
+  lint-build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup PNPM
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
+
+      - name: Setup Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18.x
+          cache: "pnpm"
+
+      - name: Install packages
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint with Prettier and Svelte-Check
+        run: pnpm lint && pnpm check
+
+      - name: Build
+        if: ${{ !startsWith(github.ref_name, 'chore/') && !startsWith(github.ref_name, 'docs/') && !startsWith(github.event.head_commit.message, 'chore:') && !startsWith(github.event.head_commit.message, 'NO-DEPLOY:') }}
+        run: pnpm build

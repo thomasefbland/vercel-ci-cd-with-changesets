@@ -1,0 +1,82 @@
+name: "CD: Preview"
+env:
+  VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+  VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+on:
+  workflow_run:
+    workflows: ["CI"]
+    types:
+      - completed
+
+concurrency: ${{ github.workflow }}-${{ github.ref }}
+
+jobs:
+  changesets:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ github.event.workflow_run.head_branch }}
+          fetch-depth: 0
+
+      - name: Setup PNPM
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
+
+      - name: Setup Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18.x
+          cache: "pnpm"
+
+      - name: Install packages
+        run: pnpm install --frozen-lockfile
+
+      - name: Create PR if there is a Changeset
+        id: changesets
+        uses: ./.github/actions/changesets
+        with:
+          title: "Bump Version and Merge to Production"
+          createGithubReleases: false
+          sourceBranch: ${{ github.event.workflow_run.head_branch }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    outputs:
+      hasChangesets: ${{ steps.changesets.outputs.hasChangesets }}
+
+  deploy:
+    needs: ["changesets"]
+    if: ${{ !startsWith(github.event.workflow_run.head_branch, 'chore/') && !startsWith(github.event.workflow_run.head_branch, 'docs/') && !startsWith(github.event.workflow_run.head_commit.message, 'chore:') && !startsWith(github.event.workflow_run.head_commit.message, 'NO-DEPLOY:') && needs.changesets.outputs.hasChangesets == 'false' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ github.event.workflow_run.head_branch }}
+
+      - name: Setup PNPM
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
+
+      - name: Setup Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18.x
+          cache: "pnpm"
+
+      - name: Install Vercel CLI
+        run: pnpm install --global vercel@latest
+
+      - name: Pull Vercel Environment Information
+        run: vercel pull --yes --environment=preview --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Build Project Artifacts
+        run: vercel build --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Deploy Project Artifacts to Vercel
+        run: vercel deploy --prebuilt --token=${{ secrets.VERCEL_TOKEN }}
