@@ -1,7 +1,8 @@
 <script lang="ts">
 	import { sum, difference } from "$lib/utils/math";
 
-	export let count = 0;
+	export let initialCount = 0;
+	let count = initialCount;
 
 	function decrement() {
 		count = difference(count, 1);
@@ -10,12 +11,19 @@
 	function increment() {
 		count = sum(count, 1);
 	}
+
+	function reset() {
+		count = initialCount;
+	}
 </script>
 
-<div class="counter">
-	<button on:click={decrement} class="decrement">-</button>
-	<input type="number" bind:value={count} />
-	<button on:click={increment} class="increment">+</button>
+<div class="text-center">
+	<div class="counter">
+		<button on:click={decrement} class="decrement">-</button>
+		<input type="number" bind:value={count} />
+		<button on:click={increment} class="increment">+</button>
+	</div>
+	<button on:click={reset} class="reset">Reset</button>
 </div>
 
 <style lang="postcss">
@@ -42,5 +50,9 @@
 				background-color: rgba(84, 84, 255, 0.5);
 			}
 		}
+	}
+
+	.reset {
+		@apply mt-2 rounded-md bg-green-300 px-6 py-3 text-lg;
 	}
 </style>

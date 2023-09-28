@@ -12,6 +12,6 @@
 
 	<div id="counter-2">
 		<h2 class="mb-4 text-center text-4xl font-semibold">Counter #2</h2>
-		<Counter count={5} />
+		<Counter initialCount={5} />
 	</div>
 </div>
